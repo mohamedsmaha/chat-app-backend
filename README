@@ -1,0 +1,1019 @@
+# Real-Time Chat Backend
+
+A real-time one-to-one chat backend built with **NestJS**, **MongoDB**, **Mongoose**, and **Socket.IO**.
+
+The application provides:
+
+* User registration and authentication
+* JWT access and refresh tokens
+* User search
+* One-to-one conversations
+* Real-time messaging
+* Message delivery status
+* Online status
+* Typing indicators
+* Conversation management
+* Email sending through Gmail SMTP
+
+---
+
+# 1. Setup
+
+## Requirements
+
+Before running the project, make sure you have:
+
+* Node.js
+* npm
+* MongoDB
+* Git
+* Docker (optional)
+
+---
+
+# 2. Install Dependencies
+
+Clone the project:
+
+```bash
+git clone <repository-url>
+cd <project-folder>
+```
+
+Install the backend dependencies:
+
+```bash
+npm install
+```
+
+---
+
+# 3. Environment Variables
+
+Create a `.env` file in the project root.
+
+Example:
+
+```env
+MONGODB_URI=mongodb://mongodb:27017/chat
+
+DOMAIN=http://localhost:3000
+PORT=3000
+
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USER=your-email@gmail.com
+MAIL_PASS=your-gmail-app-password
+MAIL_FROM=your-email@gmail.com
+
+ACCESS_TOKEN_SECRET=your_access_token_secret
+ACCESS_TOKEN_EXPIRES_IN=1d
+
+REFRESH_TOKEN_SECRET=your_refresh_token_secret
+REFRESH_TOKEN_EXPIRES_IN=7d
+
+NODE_ENV=development
+
+SERVER_MODE=local
+
+FRONTEND_URL=http://127.0.0.1:5500/
+```
+
+## Environment Variables
+
+| Variable                   | Description                                 | Example                        |
+| -------------------------- | ------------------------------------------- | ------------------------------ |
+| `MONGODB_URI`              | MongoDB connection string                   | `mongodb://mongodb:27017/chat` |
+| `DOMAIN`                   | Backend application domain                  | `http://localhost:3000`        |
+| `PORT`                     | Port used by the backend                    | `3000`                         |
+| `MAIL_HOST`                | Gmail SMTP server                           | `smtp.gmail.com`               |
+| `MAIL_PORT`                | Gmail SMTP port                             | `587`                          |
+| `MAIL_USER`                | Gmail account used to send emails           | `your-email@gmail.com`         |
+| `MAIL_PASS`                | Gmail App Password                          | `your-gmail-app-password`      |
+| `MAIL_FROM`                | Sender email address                        | `your-email@gmail.com`         |
+| `ACCESS_TOKEN_SECRET`      | Secret used to sign access JWTs             | `your_access_token_secret`     |
+| `ACCESS_TOKEN_EXPIRES_IN`  | Access token lifetime                       | `1d`                           |
+| `REFRESH_TOKEN_SECRET`     | Secret used to sign refresh JWTs            | `your_refresh_token_secret`    |
+| `REFRESH_TOKEN_EXPIRES_IN` | Refresh token lifetime                      | `7d`                           |
+| `NODE_ENV`                 | Application environment                     | `development`                  |
+| `SERVER_MODE`              | Server/network configuration mode           | `local`                        |
+| `FRONTEND_URL`             | URL allowed to communicate with the backend | `http://127.0.0.1:5500/`       |
+
+---
+
+# 4. Email Configuration
+
+The application uses **Gmail SMTP** to send emails.
+
+No external email delivery service such as SendGrid, Mailgun, or Amazon SES is required.
+
+Emails are sent through a Gmail account using Gmail's SMTP server.
+
+## Gmail SMTP Settings
+
+```env
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USER=your-email@gmail.com
+MAIL_PASS=your-gmail-app-password
+MAIL_FROM=your-email@gmail.com
+```
+
+## Gmail App Password
+
+The application uses a **Gmail App Password** for SMTP authentication instead of the normal Gmail account password.
+
+The Gmail account must have **2-Step Verification** enabled before an App Password can be created.
+
+The generated App Password should be placed in:
+
+```env
+MAIL_PASS=your-gmail-app-password
+```
+
+The normal Gmail account password should not be used or stored in the application.
+
+## Security
+
+Email credentials and JWT secrets are sensitive and must not be committed to Git.
+
+Add the following to `.gitignore`:
+
+```gitignore
+.env
+```
+
+Never commit:
+
+```text
+MAIL_PASS
+ACCESS_TOKEN_SECRET
+REFRESH_TOKEN_SECRET
+```
+
+to a public repository.
+
+---
+
+# 5. NODE_ENV
+
+The application supports the following environments:
+
+```text
+development
+production
+test
+```
+
+For local development:
+
+```env
+NODE_ENV=development
+```
+
+---
+
+# 6. SERVER_MODE
+
+The application supports different server/network configurations:
+
+```text
+local
+same-server
+separate
+```
+
+### local
+
+Used when running the application locally.
+
+```env
+SERVER_MODE=local
+```
+
+### same-server
+
+Used when the backend and frontend are deployed on the same server or domain.
+
+```env
+SERVER_MODE=same-server
+```
+
+### separate
+
+Used when the backend and frontend are deployed on separate domains.
+
+```env
+SERVER_MODE=separate
+```
+
+---
+
+# 7. Run MongoDB
+
+MongoDB can be run locally or using Docker.
+
+## Option 1: Local MongoDB
+
+Start MongoDB locally and make sure it is available at:
+
+```text
+mongodb://localhost:27017
+```
+
+The application uses the:
+
+```text
+chat
+```
+
+database.
+
+The environment variable should then be:
+
+```env
+MONGODB_URI=mongodb://localhost:27017/chat
+```
+
+---
+
+## Option 2: Docker
+
+The project can run MongoDB using Docker Compose.
+
+Start the services:
+
+```bash
+docker compose up
+```
+
+When the backend and MongoDB are running inside Docker, the backend connects to MongoDB using the Docker service name:
+
+```env
+MONGODB_URI=mongodb://mongodb:27017/chat
+```
+
+The hostname `mongodb` refers to the MongoDB service defined in Docker Compose.
+
+Do not use:
+
+```env
+MONGODB_URI=mongodb://localhost:27017/chat
+```
+
+from inside the backend container because `localhost` refers to the backend container itself.
+
+---
+
+# 8. Start the Backend
+
+## Development
+
+Start the NestJS development server:
+
+```bash
+npm run start:dev
+```
+
+The backend will be available at:
+
+```text
+http://localhost:3000
+```
+
+## Build
+
+To create the production build:
+
+```bash
+npm run build
+```
+
+## Production
+
+Run the compiled application:
+
+```bash
+npm run start:prod
+```
+
+---
+
+# 9. Docker Commands
+
+Start the services:
+
+```bash
+docker compose up
+```
+
+Build and start the services:
+
+```bash
+docker compose up --build
+```
+
+Stop the services:
+
+```bash
+docker compose down
+```
+
+---
+
+# 10. Architecture
+
+## High-Level Architecture
+
+The backend follows a modular NestJS architecture:
+
+```text
+                    ┌─────────────────────┐
+                    │      REST API       │
+                    └──────────┬──────────┘
+                               │
+                    ┌──────────▼──────────┐
+                    │     NestJS App      │
+                    │                     │
+                    │ Controllers         │
+                    │ Services            │
+                    │ Guards              │
+                    │ Gateways             │
+                    └──────────┬──────────┘
+                               │
+                  ┌────────────┴────────────┐
+                  │                         │
+             Mongoose                  Socket.IO
+                  │                         │
+                  ▼                         ▼
+             ┌─────────┐             Real-time
+             │ MongoDB │             Communication
+             └─────────┘
+```
+
+The backend uses two main communication mechanisms:
+
+* REST API for standard request/response operations.
+* Socket.IO for real-time communication.
+
+MongoDB is used for persistent application data.
+
+---
+
+# 11. Backend Architecture
+
+The backend is organized into feature-based NestJS modules.
+
+Main modules include:
+
+```text
+src/
+├── Auth/
+├── Chat/
+├── Conversation/
+├── Email/
+├── Message/
+├── Session/
+├── Users/
+└── Utility/
+```
+
+The general request flow is:
+
+```text
+Request
+   ↓
+Controller / Gateway
+   ↓
+Guard / Validation
+   ↓
+Service
+   ↓
+Mongoose Model
+   ↓
+MongoDB
+```
+
+## Controllers
+
+Controllers handle HTTP requests.
+
+Examples include:
+
+* User registration
+* User login
+* User search
+* Conversation creation
+* Conversation retrieval
+* Message operations
+
+## Services
+
+Services contain the application's business logic.
+
+Examples include:
+
+* Authentication
+* Password verification
+* User management
+* Conversation management
+* Message management
+* Online status
+* Message delivery status
+
+## Gateways
+
+Socket.IO gateways handle real-time events.
+
+Examples include:
+
+* Creating messages
+* Typing indicators
+* Online status
+* Entering conversations
+* Conversation events
+
+## Guards
+
+Guards protect authenticated resources and validate authentication information before allowing access.
+
+---
+
+# 12. Database Design
+
+MongoDB is used as the primary database.
+
+Mongoose is used as the ODM.
+
+The main entities are:
+
+```text
+User
+Conversation
+Message
+Session
+```
+
+---
+
+# 13. User
+
+A User represents an account in the system.
+
+Conceptually:
+
+```text
+User
+├── _id
+├── username
+├── email
+├── password
+├── profile image
+└── timestamps
+```
+
+Passwords are stored as hashes rather than plaintext passwords.
+
+---
+
+# 14. Conversation Design
+
+The application implements one-to-one conversations.
+
+A conversation contains references to its participants.
+
+Conceptually:
+
+```text
+Conversation
+├── _id
+├── participants
+│   ├── User A
+│   └── User B
+└── timestamps
+```
+
+## Why References?
+
+Users are independent entities and can change over time.
+
+For example, a user can change:
+
+* Username
+* Profile image
+* Other profile information
+
+Using references avoids duplicating this information inside every conversation.
+
+It also keeps the User document as the single source of truth.
+
+---
+
+# 15. Message Design
+
+Messages belong to a conversation.
+
+Conceptually:
+
+```text
+Message
+├── _id
+├── conversationId
+├── senderId
+├── content
+├── status
+└── timestamps
+```
+
+The message references:
+
+* The conversation
+* The sender
+
+Instead of embedding complete User and Conversation documents inside every message.
+
+This keeps messages lightweight and avoids unnecessary data duplication.
+
+---
+
+# 16. Embedded Documents vs References
+
+References are used for entities that have their own lifecycle and are shared across multiple documents.
+
+For example:
+
+```text
+Message
+   │
+   ├── senderId → User
+   │
+   └── conversationId → Conversation
+```
+
+References were preferred because:
+
+1. Users are shared by multiple conversations and messages.
+2. Conversations contain many messages.
+3. User information can change independently.
+4. Duplicating user information can cause consistency problems.
+5. Messages should remain relatively small.
+
+Embedded documents are more suitable for small data that belongs exclusively to a parent document and does not require an independent lifecycle.
+
+---
+
+# 17. Authentication
+
+The application uses **JWT-based authentication**.
+
+The authentication flow is:
+
+```text
+Login
+  ↓
+Validate credentials
+  ↓
+Generate Access Token
+  ↓
+Generate Refresh Token
+  ↓
+Client sends Access Token
+  ↓
+Authentication Guard
+  ↓
+Validate JWT
+  ↓
+Authenticated Request
+```
+
+The application uses two types of tokens:
+
+### Access Token
+
+Used to authenticate API requests.
+
+```text
+ACCESS_TOKEN_EXPIRES_IN=1d
+```
+
+### Refresh Token
+
+Used to maintain authentication for a longer period.
+
+```text
+REFRESH_TOKEN_EXPIRES_IN=7d
+```
+
+---
+
+# 18. Why JWT Instead of Cookie-Based Sessions?
+
+JWT was chosen because the application supports both:
+
+```text
+REST API
++
+WebSocket communication
+```
+
+JWT provides a common authentication mechanism that can be used for HTTP requests and Socket.IO connections.
+
+For REST requests:
+
+```text
+Authorization: Bearer <access-token>
+```
+
+For WebSocket connections, the JWT is validated during the connection/authentication process.
+
+This avoids requiring a server-side session for every authenticated request.
+
+## Trade-offs
+
+JWT authentication introduces responsibilities such as:
+
+* Token expiration
+* Secure token storage
+* Refresh token handling
+* Token revocation when required
+
+Cookie-based sessions can simplify browser session management but require server-side session handling or a session store.
+
+JWT was selected because it fits the REST and WebSocket architecture of this application.
+
+---
+
+# 19. WebSocket Architecture
+
+Socket.IO is used for real-time bidirectional communication.
+
+The main WebSocket responsibilities are:
+
+* Real-time message delivery
+* Typing indicators
+* Online status
+* Entering conversations
+* Leaving conversations
+* Message delivery updates
+
+---
+
+# 20. WebSocket Connection Flow
+
+When a client connects:
+
+```text
+Client
+  ↓
+Socket.IO Connection
+  ↓
+Authenticate JWT
+  ↓
+Identify User
+  ↓
+Join User Room
+  ↓
+Join Conversation Rooms
+```
+
+A user-specific room is used:
+
+```text
+user:{userId}
+```
+
+Conversation rooms are also used:
+
+```text
+conversation:{conversationId}
+```
+
+This allows events to be delivered only to the users who should receive them instead of broadcasting events to every connected client.
+
+---
+
+# 21. WebSocket Events
+
+The application uses events for different real-time operations.
+
+Examples:
+
+```text
+ConversationList:Search
+Conversation:Create
+Message:Create
+Typing:Start
+Typing:Stop
+Online:Check
+Chat:Enter
+```
+
+The general message flow is:
+
+```text
+User A
+  │
+  │ Message:Create
+  ▼
+Socket.IO Gateway
+  │
+  ▼
+Validate authenticated user
+  │
+  ▼
+Create Message
+  │
+  ▼
+Save Message in MongoDB
+  │
+  ▼
+Emit Socket.IO Event
+  │
+  ▼
+User B receives Message
+```
+
+MongoDB remains the persistent source of truth, while Socket.IO handles real-time delivery.
+
+---
+
+# 22. Online Status
+
+Online status is based on active Socket.IO connections.
+
+A user may have multiple active connections:
+
+```text
+User A
+├── Socket 1
+├── Socket 2
+└── Socket 3
+```
+
+Therefore, the system does not assume that one socket represents one user.
+
+User-specific rooms are used to communicate with all active connections belonging to the same user.
+
+---
+
+# 23. Typing Indicators
+
+Typing indicators are temporary real-time events:
+
+```text
+Typing:Start
+Typing:Stop
+```
+
+Typing information is not permanently stored in MongoDB because it represents temporary connection state rather than persistent application data.
+
+---
+
+# 24. Message Delivery
+
+Messages are persisted in MongoDB.
+
+Socket.IO is used to notify the recipient when a message is delivered.
+
+Conceptually:
+
+```text
+Message Created
+      ↓
+Saved in MongoDB
+      ↓
+Sent through Socket.IO
+      ↓
+Recipient receives Message
+      ↓
+Delivery Status Updated
+```
+
+This separates persistent message data from transient WebSocket events.
+
+---
+
+# 25. Pagination
+
+Cursor-based pagination is used for data that can grow over time, especially messages and searchable lists.
+
+Instead of relying only on page numbers:
+
+```text
+?page=1
+?page=2
+?page=3
+```
+
+the API can use a cursor representing the position of the last retrieved item.
+
+Example:
+
+```text
+GET /messages?limit=20&cursor=<cursor>
+```
+
+## Why Cursor Pagination?
+
+Chat messages can grow significantly over time.
+
+Offset pagination can become less efficient when the requested offset becomes large.
+
+Cursor pagination allows the database to continue from a known position.
+
+It also provides more stable pagination when new messages are inserted while older messages are being loaded.
+
+## Trade-off
+
+Cursor pagination is more complex to implement than simple offset pagination because the API needs to generate, validate, and handle cursors.
+
+However, it is well suited to continuously growing datasets such as chat messages.
+
+---
+
+# 26. Technical Decisions and Trade-offs
+
+## NestJS
+
+NestJS was chosen because it provides a structured architecture based on:
+
+* Modules
+* Controllers
+* Services
+* Dependency Injection
+* Guards
+* Gateways
+
+This makes it easier to separate authentication, users, conversations, messages, and real-time communication.
+
+### Trade-off
+
+NestJS introduces more structure and boilerplate compared with a minimal Express application.
+
+---
+
+## MongoDB
+
+MongoDB was chosen because the application works with document-oriented data such as:
+
+* Users
+* Conversations
+* Messages
+* Sessions
+
+MongoDB integrates naturally with Mongoose and provides flexible document modeling.
+
+### Trade-off
+
+MongoDB does not provide the same relational constraints and join model as a relational database.
+
+Therefore, references, indexes, and query patterns need to be designed carefully.
+
+---
+
+## Socket.IO
+
+Socket.IO was chosen because the application requires real-time bidirectional communication.
+
+It provides:
+
+* Events
+* Rooms
+* Connection management
+* Reconnection support
+* Real-time communication
+
+### Trade-off
+
+Real-time communication introduces additional complexity around:
+
+* Connection state
+* Disconnections
+* Multiple sockets per user
+* Event delivery
+* Synchronization with persistent data
+
+---
+
+## JWT Authentication
+
+JWT was chosen to support authentication across both REST and WebSocket communication.
+
+### Trade-off
+
+The application needs to handle token expiration, refresh tokens, and secure token storage correctly.
+
+---
+
+## References
+
+References are used for Users, Conversations, and Messages because these entities have independent lifecycles and are shared across the application.
+
+### Trade-off
+
+Related data may require additional queries or population, but this avoids duplicated data and consistency problems.
+
+---
+
+## Cursor Pagination
+
+Cursor pagination was selected for potentially large datasets such as messages.
+
+### Trade-off
+
+It is more complex to implement than page/offset pagination, but provides more stable pagination for continuously changing datasets.
+
+---
+
+# 27. Docker
+
+Docker can be used to run the backend and MongoDB in isolated containers.
+
+A typical setup is:
+
+```text
+Docker Compose
+│
+├── app
+│   └── NestJS
+│
+└── mongodb
+    └── MongoDB
+```
+
+The backend connects to MongoDB using the Docker service name:
+
+```text
+mongodb:27017
+```
+
+instead of:
+
+```text
+localhost:27017
+```
+
+when both services are running inside Docker.
+
+Docker provides:
+
+* Consistent environments
+* Easier deployment
+* Isolated services
+* Easier MongoDB setup
+* Reduced "works on my machine" problems
+
+---
+
+# 28. Project Structure
+
+```text
+src/
+├── Auth/
+├── Chat/
+├── Conversation/
+├── Email/
+├── Message/
+├── Session/
+├── Users/
+└── Utility/
+```
+
+The project is organized by feature, with each feature containing its own controllers, services, schemas, DTOs, and related components.
+
+---
+
+# 29. Application Flow
+
+The overall backend flow is:
+
+```text
+                    ┌───────────────┐
+                    │   REST API    │
+                    └───────┬───────┘
+                            │
+                            ▼
+                    ┌───────────────┐
+                    │    NestJS     │
+                    │    Backend    │
+                    └───────┬───────┘
+                            │
+                 ┌──────────┴──────────┐
+                 │                     │
+                 ▼                     ▼
+             Mongoose              Socket.IO
+                 │                     │
+                 ▼                     ▼
+             MongoDB              Real-time
+                                Communication
+```
+
+The backend separates:
+
+* HTTP request handling
+* Business logic
+* Authentication
+* Database persistence
+* Real-time communication
+
+This structure makes the application easier to maintain and extend.
